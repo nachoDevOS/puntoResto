@@ -97,7 +97,7 @@ const isActive = (href) => page.url.startsWith(href);
             </div>
         </aside>
 
-        <main class="flex-1 overflow-x-hidden">
+        <main class="flex-1 overflow-x-hidden print:overflow-visible">
             <slot />
         </main>
 

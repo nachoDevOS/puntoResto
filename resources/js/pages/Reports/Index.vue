@@ -1,11 +1,11 @@
 <script setup>
 import { nextTick, ref } from 'vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import AppLayout from '../../layouts/AppLayout.vue';
 import SaleDetailModal from '../../components/SaleDetailModal.vue';
 
 const props = defineProps({
-    sales: Object,
+    sales: Array,
     filters: Object,
     summary: Object,
 });
@@ -122,7 +122,7 @@ const printReport = async () => {
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
-                        <tr v-for="sale in sales.data" :key="sale.id" class="hover:bg-slate-50">
+                        <tr v-for="sale in sales" :key="sale.id" class="hover:bg-slate-50">
                             <td class="px-4 py-3 font-medium text-slate-800">{{ sale.ticket_number ?? sale.id }}</td>
                             <td class="px-4 py-3 text-slate-500">{{ formatDateTime(sale.created_at) }}</td>
                             <td class="px-4 py-3">
@@ -144,36 +144,13 @@ const printReport = async () => {
                                 </button>
                             </td>
                         </tr>
-                        <tr v-if="!sales.data.length">
-                            <td colspan="7" class="px-4 py-8 text-center text-slate-400">Sin ventas en este rango.</td>
+                        <tr v-if="!sales.length">
+                            <td colspan="7" class="px-4 py-8 text-center text-slate-400">Sin ventas en este día.</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
 
-            <!-- Paginación -->
-            <div v-if="sales.last_page > 1" class="mt-4 flex items-center justify-between">
-                <p class="text-sm text-slate-500">
-                    Mostrando {{ sales.from }}–{{ sales.to }} de {{ sales.total }} ventas
-                </p>
-                <nav class="flex gap-1">
-                    <template v-for="(link, index) in sales.links" :key="index">
-                        <Link
-                            v-if="link.url"
-                            :href="link.url"
-                            preserve-scroll
-                            class="rounded-lg px-3 py-1.5 text-sm font-medium transition"
-                            :class="link.active ? 'bg-emerald-500 text-white' : 'bg-white text-slate-600 shadow-sm hover:bg-slate-50'"
-                            v-html="link.label"
-                        />
-                        <span
-                            v-else
-                            class="rounded-lg px-3 py-1.5 text-sm text-slate-300"
-                            v-html="link.label"
-                        />
-                    </template>
-                </nav>
-            </div>
         </div>
 
         <!-- Versión imprimible -->

@@ -29,8 +29,7 @@ class ReportController extends Controller
         $sales = (clone $query)
             ->with(['details', 'user:id,name'])
             ->latest()
-            ->paginate(15)
-            ->withQueryString();
+            ->get();
 
         return Inertia::render('Reports/Index', [
             'sales' => $sales,
