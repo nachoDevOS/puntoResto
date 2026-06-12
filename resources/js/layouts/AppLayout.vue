@@ -47,8 +47,8 @@ const isActive = (href) => page.url.startsWith(href);
 </script>
 
 <template>
-    <div class="flex min-h-screen bg-gray-100">
-        <aside class="flex w-56 shrink-0 flex-col bg-slate-800 text-slate-200">
+    <div class="flex min-h-screen bg-gray-100 print:block print:min-h-0 print:bg-white">
+        <aside class="flex w-56 shrink-0 flex-col bg-slate-800 text-slate-200 print:hidden">
             <div class="flex items-center gap-2 px-4 py-5 text-lg font-bold text-white">
                 🍽️ PuntoResto
             </div>

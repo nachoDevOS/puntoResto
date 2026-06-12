@@ -64,6 +64,15 @@ class PosController extends Controller
         $cashAmount = round((float) $validated['cash_amount'], 2);
         $qrAmount = round((float) $validated['qr_amount'], 2);
 
+        if ($validated['payment_method'] === 'efectivo') {
+            $qrAmount = 0.0;
+        } elseif ($validated['payment_method'] === 'qr') {
+            $cashAmount = 0.0;
+            $qrAmount = round($total, 2);
+        } elseif ($cashAmount <= 0 || $qrAmount <= 0) {
+            return back()->with('error', 'El pago mixto requiere montos en efectivo y QR mayores a 0.');
+        }
+
         if (round($cashAmount + $qrAmount, 2) < round($total, 2)) {
             return back()->with('error', 'El monto pagado es menor al total.');
         }

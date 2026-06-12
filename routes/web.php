@@ -26,3 +26,4 @@ Route::get('sales', [SaleController::class, 'index'])->name('sales.index');
 Route::delete('sales/{sale}', [SaleController::class, 'destroy'])->name('sales.destroy');
 
 Route::get('reports/sales', [ReportController::class, 'index'])->name('reports.sales');
+Route::get('reports/sales/print', [ReportController::class, 'print'])->name('reports.sales.print');

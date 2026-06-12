@@ -81,8 +81,12 @@ const paidEnough = computed(() => {
     if (form.payment_method === 'efectivo') return Number(form.cash_amount) >= total.value;
     if (form.payment_method === 'qr') return Number(form.qr_amount) >= total.value;
 
-    return Number(form.cash_amount) + Number(form.qr_amount) >= total.value;
+    return Number(form.cash_amount) > 0 && Number(form.qr_amount) > 0 && Number(form.cash_amount) + Number(form.qr_amount) >= total.value;
 });
+
+const mixedAmountMissing = computed(
+    () => form.payment_method === 'mixto' && (Number(form.cash_amount) <= 0 || Number(form.qr_amount) <= 0),
+);
 
 const change = computed(() => {
     const paid = Number(form.cash_amount) + Number(form.qr_amount);
@@ -109,7 +113,10 @@ let saleSuccessTimer;
 
 const submit = () => {
     if (form.payment_method === 'efectivo') form.qr_amount = 0;
-    if (form.payment_method === 'qr') form.cash_amount = 0;
+    if (form.payment_method === 'qr') {
+        form.cash_amount = 0;
+        form.qr_amount = total.value;
+    }
 
     form.items = cart.value.map((item) => ({
         product_id: item.product_id,
@@ -254,17 +261,17 @@ const submit = () => {
                 <div class="space-y-3 border-t border-slate-100 p-4">
                     <!-- Tipo de venta -->
                     <div>
-                        <p class="mb-1.5 text-xs font-semibold text-slate-500 uppercase">Tipo de venta</p>
+                        <p class="mb-1.5 text-sm font-semibold text-slate-500 uppercase">Tipo de venta</p>
                         <div class="grid grid-cols-2 gap-2">
                             <button
-                                class="rounded-lg border-2 py-2 text-sm font-semibold transition"
+                                class="rounded-lg border-2 py-4 text-lg font-semibold transition"
                                 :class="form.type === 'mesa' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-slate-200 text-slate-500'"
                                 @click="form.type = 'mesa'"
                             >
                                 🍴 Para Mesa
                             </button>
                             <button
-                                class="rounded-lg border-2 py-2 text-sm font-semibold transition"
+                                class="rounded-lg border-2 py-4 text-lg font-semibold transition"
                                 :class="form.type === 'llevar' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-slate-200 text-slate-500'"
                                 @click="form.type = 'llevar'"
                             >
@@ -283,7 +290,7 @@ const submit = () => {
 
                     <!-- Método de pago -->
                     <div>
-                        <p class="mb-1.5 text-xs font-semibold text-slate-500 uppercase">Método de pago</p>
+                        <p class="mb-1.5 text-sm font-semibold text-slate-500 uppercase">Método de pago</p>
                         <div class="grid grid-cols-3 gap-2">
                             <button
                                 v-for="method in [
@@ -292,7 +299,7 @@ const submit = () => {
                                     { value: 'mixto', label: '💵+📱 Mixto' },
                                 ]"
                                 :key="method.value"
-                                class="rounded-lg border-2 py-2 text-xs font-semibold transition"
+                                class="rounded-lg border-2 py-4 text-base font-semibold transition"
                                 :class="form.payment_method === method.value ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-slate-200 text-slate-500'"
                                 @click="setPaymentMethod(method.value)"
                             >
@@ -302,29 +309,43 @@ const submit = () => {
 
                         <div class="mt-2 space-y-2">
                             <div v-if="form.payment_method !== 'qr'" class="flex items-center gap-2">
-                                <span class="w-20 text-xs font-medium text-slate-500">Efectivo Bs.</span>
+                                <span class="w-20 text-sm font-medium text-slate-500">Efectivo Bs.</span>
                                 <input
                                     v-model.number="form.cash_amount"
                                     type="number"
                                     step="0.01"
                                     min="0"
-                                    class="flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-right text-sm font-semibold focus:border-emerald-500 focus:outline-none"
+                                    class="flex-1 rounded-lg border border-slate-300 px-3 py-2.5 text-right text-base font-semibold focus:border-emerald-500 focus:outline-none"
                                 />
                             </div>
                             <div v-if="form.payment_method !== 'efectivo'" class="flex items-center gap-2">
-                                <span class="w-20 text-xs font-medium text-slate-500">QR Bs.</span>
+                                <span class="w-20 text-sm font-medium text-slate-500">QR Bs.</span>
                                 <input
                                     v-model.number="form.qr_amount"
                                     type="number"
                                     step="0.01"
                                     min="0"
-                                    class="flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-right text-sm font-semibold focus:border-emerald-500 focus:outline-none"
+                                    :readonly="form.payment_method === 'qr'"
+                                    class="flex-1 rounded-lg border border-slate-300 px-3 py-2.5 text-right text-base font-semibold focus:border-emerald-500 focus:outline-none"
+                                    :class="form.payment_method === 'qr' ? 'cursor-not-allowed bg-slate-100 text-slate-500' : ''"
                                 />
                             </div>
-                            <p v-if="cart.length && change > 0" class="text-right text-sm font-medium text-blue-600">
+                            <p
+                                v-if="cart.length && change > 0"
+                                class="rounded-lg bg-blue-50 px-3 py-2 text-right text-lg font-bold text-blue-700"
+                            >
                                 Cambio: Bs. {{ change.toFixed(2) }}
                             </p>
-                            <p v-if="cart.length && !paidEnough" class="text-right text-sm font-medium text-red-600">
+                            <p
+                                v-if="cart.length && mixedAmountMissing"
+                                class="rounded-lg bg-red-50 px-3 py-2 text-right text-base font-bold text-red-700"
+                            >
+                                Pago mixto: efectivo y QR deben ser mayores a 0
+                            </p>
+                            <p
+                                v-if="cart.length && total - Number(form.cash_amount) - Number(form.qr_amount) > 0"
+                                class="rounded-lg bg-red-50 px-3 py-2 text-right text-lg font-bold text-red-700"
+                            >
                                 Falta: Bs. {{ (total - Number(form.cash_amount) - Number(form.qr_amount)).toFixed(2) }}
                             </p>
                         </div>

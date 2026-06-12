@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { nextTick, ref } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import AppLayout from '../../layouts/AppLayout.vue';
 import SaleDetailModal from '../../components/SaleDetailModal.vue';
@@ -10,18 +10,15 @@ const props = defineProps({
     summary: Object,
 });
 
-const from = ref(props.filters.from);
-const to = ref(props.filters.to);
+const date = ref(props.filters.from);
 const selectedSale = ref(null);
 
 const applyFilters = () => {
-    router.get('/reports/sales', { from: from.value, to: to.value }, { preserveState: true });
+    router.get('/reports/sales', { from: date.value, to: date.value }, { preserveState: true });
 };
 
 const setToday = () => {
-    const today = new Date().toISOString().slice(0, 10);
-    from.value = today;
-    to.value = today;
+    date.value = new Date().toISOString().slice(0, 10);
     applyFilters();
 };
 
@@ -29,31 +26,42 @@ const formatDateTime = (value) =>
     new Date(value).toLocaleString('es-BO', { dateStyle: 'short', timeStyle: 'short' });
 
 const paymentLabels = { efectivo: 'Efectivo', qr: 'QR/Transf.', mixto: 'Mixto' };
+
+const printData = ref(null);
+const printing = ref(false);
+
+const printReport = async () => {
+    printing.value = true;
+
+    try {
+        const response = await fetch(`/reports/sales/print?date=${date.value}`, {
+            headers: { Accept: 'application/json' },
+        });
+
+        printData.value = await response.json();
+
+        await nextTick();
+        window.print();
+    } finally {
+        printing.value = false;
+    }
+};
 </script>
 
 <template>
     <Head title="Reporte de ventas" />
 
     <AppLayout>
-        <div class="mx-auto max-w-5xl p-6">
+        <div class="mx-auto max-w-5xl p-6 print:hidden">
             <h1 class="mb-6 text-2xl font-bold text-slate-800">Reporte de ventas</h1>
 
             <!-- Filtros -->
             <div class="mb-6 flex flex-wrap items-end gap-3 rounded-xl bg-white p-4 shadow">
                 <div>
-                    <label class="mb-1 block text-xs font-medium text-slate-500" for="from">Desde</label>
+                    <label class="mb-1 block text-xs font-medium text-slate-500" for="date">Fecha</label>
                     <input
-                        id="from"
-                        v-model="from"
-                        type="date"
-                        class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
-                    />
-                </div>
-                <div>
-                    <label class="mb-1 block text-xs font-medium text-slate-500" for="to">Hasta</label>
-                    <input
-                        id="to"
-                        v-model="to"
+                        id="date"
+                        v-model="date"
                         type="date"
                         class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
                     />
@@ -69,6 +77,13 @@ const paymentLabels = { efectivo: 'Efectivo', qr: 'QR/Transf.', mixto: 'Mixto' }
                     @click="setToday"
                 >
                     📅 Hoy
+                </button>
+                <button
+                    :disabled="printing"
+                    class="ml-auto rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:opacity-50"
+                    @click="printReport"
+                >
+                    🖨️ Imprimir
                 </button>
             </div>
 
@@ -159,6 +174,59 @@ const paymentLabels = { efectivo: 'Efectivo', qr: 'QR/Transf.', mixto: 'Mixto' }
                     </template>
                 </nav>
             </div>
+        </div>
+
+        <!-- Versión imprimible -->
+        <div v-if="printData" class="hidden p-8 text-black print:block">
+            <h1 class="text-xl font-bold">Reporte de ventas</h1>
+            <p class="mt-1 text-sm">
+                Día: {{ printData.date }} · Impreso el {{ formatDateTime(new Date()) }}
+            </p>
+
+            <table class="mt-4 w-full border-collapse text-sm">
+                <tbody>
+                    <tr>
+                        <td class="border border-black px-3 py-1.5 font-semibold">Ventas</td>
+                        <td class="border border-black px-3 py-1.5 text-right">{{ printData.summary.count }}</td>
+                        <td class="border border-black px-3 py-1.5 font-semibold">Ingreso Efectivo</td>
+                        <td class="border border-black px-3 py-1.5 text-right">Bs. {{ Number(printData.summary.cash).toFixed(2) }}</td>
+                        <td class="border border-black px-3 py-1.5 font-semibold">Ingreso QR</td>
+                        <td class="border border-black px-3 py-1.5 text-right">Bs. {{ Number(printData.summary.qr).toFixed(2) }}</td>
+                        <td class="border border-black px-3 py-1.5 font-semibold">Total ventas</td>
+                        <td class="border border-black px-3 py-1.5 text-right">Bs. {{ Number(printData.summary.total).toFixed(2) }}</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <table class="mt-4 w-full border-collapse text-sm">
+                <thead>
+                    <tr>
+                        <th class="border border-black px-3 py-1.5 text-left">#</th>
+                        <th class="border border-black px-3 py-1.5 text-left">Fecha</th>
+                        <th class="border border-black px-3 py-1.5 text-left">Tipo</th>
+                        <th class="border border-black px-3 py-1.5 text-left">Pago</th>
+                        <th class="border border-black px-3 py-1.5 text-left">Vendedor</th>
+                        <th class="border border-black px-3 py-1.5 text-right">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="sale in printData.sales" :key="`print-${sale.id}`">
+                        <td class="border border-black px-3 py-1.5">{{ sale.ticket_number ?? sale.id }}</td>
+                        <td class="border border-black px-3 py-1.5">{{ formatDateTime(sale.created_at) }}</td>
+                        <td class="border border-black px-3 py-1.5">
+                            {{ sale.type === 'mesa' ? `Mesa${sale.table_number ? ` ${sale.table_number}` : ''}` : 'Llevar' }}
+                        </td>
+                        <td class="border border-black px-3 py-1.5">{{ paymentLabels[sale.payment_method] }}</td>
+                        <td class="border border-black px-3 py-1.5">{{ sale.user?.name }}</td>
+                        <td class="border border-black px-3 py-1.5 text-right">Bs. {{ Number(sale.total).toFixed(2) }}</td>
+                    </tr>
+                    <tr v-if="!printData.sales.length">
+                        <td colspan="6" class="border border-black px-3 py-4 text-center">Sin ventas en este día.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p class="mt-6 text-xs">PuntoResto · Desarrollado por Solucion Digital</p>
         </div>
 
         <SaleDetailModal :sale="selectedSale" @close="selectedSale = null" />
