@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
 class Sale extends Model
 {
@@ -24,6 +25,8 @@ class Sale extends Model
         'cash_amount',
         'qr_amount',
         'total',
+        'ticket_date',
+        'ticket_number',
     ];
 
     /**
@@ -35,7 +38,18 @@ class Sale extends Model
             'cash_amount' => 'decimal:2',
             'qr_amount' => 'decimal:2',
             'total' => 'decimal:2',
+            'ticket_date' => 'date',
         ];
+    }
+
+    public static function nextTicketNumberForDate(Carbon $date): int
+    {
+        $lastTicketNumber = self::query()
+            ->whereDate('ticket_date', $date->toDateString())
+            ->lockForUpdate()
+            ->max('ticket_number');
+
+        return ((int) $lastTicketNumber) + 1;
     }
 
     public function user(): BelongsTo

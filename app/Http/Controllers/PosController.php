@@ -66,6 +66,8 @@ class PosController extends Controller
         }
 
         $sale = DB::transaction(function () use ($request, $validated, $details, $total, $cashAmount, $qrAmount): Sale {
+            $ticketDate = now();
+
             $sale = Sale::create([
                 'user_id' => $request->user()->id,
                 'type' => $validated['type'],
@@ -74,6 +76,8 @@ class PosController extends Controller
                 'cash_amount' => $cashAmount,
                 'qr_amount' => $qrAmount,
                 'total' => round($total, 2),
+                'ticket_date' => $ticketDate->toDateString(),
+                'ticket_number' => Sale::nextTicketNumberForDate($ticketDate),
             ]);
 
             $sale->details()->createMany($details);
@@ -100,7 +104,7 @@ class PosController extends Controller
     {
         return [
             'id' => $sale->id,
-            'ticket' => str_pad((string) $sale->id, 6, '0', STR_PAD_LEFT),
+            'ticket' => str_pad((string) ($sale->ticket_number ?? $sale->id), 6, '0', STR_PAD_LEFT),
             'typeSale' => $sale->type,
             'observation' => $sale->table_number ? 'Mesa '.$sale->table_number : null,
             'created_at' => $sale->created_at?->toDateTimeString(),

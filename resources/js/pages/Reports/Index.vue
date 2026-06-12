@@ -108,7 +108,7 @@ const paymentLabels = { efectivo: 'Efectivo', qr: 'QR/Transf.', mixto: 'Mixto' }
                     </thead>
                     <tbody class="divide-y divide-slate-100">
                         <tr v-for="sale in sales.data" :key="sale.id" class="hover:bg-slate-50">
-                            <td class="px-4 py-3 font-medium text-slate-800">{{ sale.id }}</td>
+                            <td class="px-4 py-3 font-medium text-slate-800">{{ sale.ticket_number ?? sale.id }}</td>
                             <td class="px-4 py-3 text-slate-500">{{ formatDateTime(sale.created_at) }}</td>
                             <td class="px-4 py-3">
                                 <span v-if="sale.type === 'mesa'" class="text-slate-700">

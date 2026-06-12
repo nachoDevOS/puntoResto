@@ -3,10 +3,15 @@
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\User;
+use Illuminate\Support\Carbon;
 
 beforeEach(function () {
     $this->user = User::factory()->create();
     $this->actingAs($this->user);
+});
+
+afterEach(function () {
+    Carbon::setTestNow();
 });
 
 it('shows the pos screen with active products only', function () {
@@ -72,6 +77,37 @@ it('registers a takeaway sale with mixed payment', function () {
 
     expect($sale->payment_method)->toBe('mixto')
         ->and($sale->table_number)->toBeNull();
+});
+
+it('starts ticket numbering at one each day', function () {
+    $product = Product::factory()->create(['price' => 10.00]);
+
+    $payload = [
+        'type' => 'llevar',
+        'table_number' => null,
+        'payment_method' => 'efectivo',
+        'cash_amount' => 10.00,
+        'qr_amount' => 0,
+        'items' => [
+            ['product_id' => $product->id, 'quantity' => 1],
+        ],
+    ];
+
+    Carbon::setTestNow(Carbon::parse('2026-06-12 09:00:00'));
+    $firstResponse = $this->post('/pos/sales', $payload)->assertRedirect();
+    $firstPrintSale = $firstResponse->baseResponse->getSession()->get('print_sale');
+
+    $secondResponse = $this->post('/pos/sales', $payload)->assertRedirect();
+    $secondPrintSale = $secondResponse->baseResponse->getSession()->get('print_sale');
+
+    Carbon::setTestNow(Carbon::parse('2026-06-13 09:00:00'));
+    $nextDayResponse = $this->post('/pos/sales', $payload)->assertRedirect();
+    $nextDayPrintSale = $nextDayResponse->baseResponse->getSession()->get('print_sale');
+
+    expect($firstPrintSale['ticket'])->toBe('000001')
+        ->and($secondPrintSale['ticket'])->toBe('000002')
+        ->and($nextDayPrintSale['ticket'])->toBe('000001')
+        ->and(Sale::orderBy('id')->pluck('ticket_number')->all())->toBe([1, 2, 1]);
 });
 
 it('snapshots product name and price in the sale detail', function () {

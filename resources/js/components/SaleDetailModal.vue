@@ -34,7 +34,7 @@ const change = (sale) => Math.max(0, Number(sale.cash_amount) + Number(sale.qr_a
                 <div class="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-2xl">
                     <!-- Header -->
                     <div class="flex items-center justify-between bg-slate-800 px-5 py-4 text-white">
-                        <h2 class="text-lg font-bold">🧾 Venta #{{ sale.id }}</h2>
+                        <h2 class="text-lg font-bold">🧾 Venta #{{ sale.ticket_number ?? sale.id }}</h2>
                         <button
                             class="rounded-lg p-1.5 text-slate-300 transition hover:bg-slate-700 hover:text-white"
                             title="Cerrar"

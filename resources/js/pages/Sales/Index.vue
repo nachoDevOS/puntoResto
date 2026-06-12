@@ -17,7 +17,7 @@ const changeStatus = () => {
 };
 
 const destroy = (sale) => {
-    if (confirm(`¿Eliminar la venta #${sale.id} de Bs. ${Number(sale.total).toFixed(2)}?`)) {
+    if (confirm(`¿Eliminar la venta #${sale.ticket_number ?? sale.id} de Bs. ${Number(sale.total).toFixed(2)}?`)) {
         useForm({}).delete(`/sales/${sale.id}`, { preserveScroll: true });
     }
 };
@@ -70,7 +70,7 @@ const paymentLabels = { efectivo: 'Efectivo', qr: 'QR/Transf.', mixto: 'Mixto' }
                             class="hover:bg-slate-50"
                             :class="{ 'opacity-70': sale.deleted_at }"
                         >
-                            <td class="px-4 py-3 font-medium text-slate-800">{{ sale.id }}</td>
+                            <td class="px-4 py-3 font-medium text-slate-800">{{ sale.ticket_number ?? sale.id }}</td>
                             <td class="px-4 py-3 text-slate-500">{{ formatDateTime(sale.created_at) }}</td>
                             <td class="px-4 py-3">
                                 <span v-if="sale.type === 'mesa'" class="text-slate-700">
