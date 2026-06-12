@@ -5,7 +5,6 @@ import ToastContainer from '../components/ToastContainer.vue';
 import { useToast } from '../composables/useToast';
 
 const page = usePage();
-const user = computed(() => page.props.auth?.user);
 const toast = useToast();
 
 const toastPosition = computed(() => (page.component === 'Pos/Index' ? 'top-left' : 'bottom-center'));
@@ -22,7 +21,7 @@ onMounted(() => {
     });
 
     removeErrorListener = router.on('error', () => {
-        toast.warning('Revisá los campos marcados.');
+        toast.warning('Revisa los campos marcados.');
     });
 
     const flash = page.props.flash ?? {};
@@ -40,13 +39,11 @@ const links = [
     { href: '/pos', label: 'Vender', icon: '🛒' },
     { href: '/sales', label: 'Ventas', icon: '🧾' },
     { href: '/products', label: 'Productos', icon: '🍗' },
-    { href: '/categories', label: 'Categorías', icon: '🏷️' },
+    { href: '/categories', label: 'Categorias', icon: '🏷️' },
     { href: '/reports/sales', label: 'Reportes', icon: '📊' },
 ];
 
 const isActive = (href) => page.url.startsWith(href);
-
-const logout = () => router.post('/logout');
 </script>
 
 <template>
@@ -75,7 +72,7 @@ const logout = () => router.post('/logout');
                         rel="noopener"
                         class="block text-xs font-bold text-emerald-400 transition hover:text-emerald-300"
                     >
-                        ⚡ Solución Digital
+                        Solucion Digital
                     </a>
                     <div class="mt-1.5 space-y-0.5">
                         <a
@@ -84,7 +81,7 @@ const logout = () => router.post('/logout');
                             rel="noopener"
                             class="block text-[11px] text-slate-400 transition hover:text-emerald-400"
                         >
-                            📱 67285914
+                            67285914
                         </a>
                         <a
                             href="https://wa.me/59177149775"
@@ -92,17 +89,11 @@ const logout = () => router.post('/logout');
                             rel="noopener"
                             class="block text-[11px] text-slate-400 transition hover:text-emerald-400"
                         >
-                            📱 77149775
+                            77149775
                         </a>
                     </div>
                 </div>
-                <p class="truncate px-2 pb-2 text-xs text-slate-400">{{ user?.name }}</p>
-                <button
-                    class="w-full rounded-lg bg-slate-700 px-3 py-2 text-sm font-medium transition hover:bg-slate-600"
-                    @click="logout"
-                >
-                    🚪 Cerrar sesión
-                </button>
+                <p class="px-2 pb-2 text-xs font-medium text-slate-400">Acceso libre</p>
             </div>
         </aside>
 

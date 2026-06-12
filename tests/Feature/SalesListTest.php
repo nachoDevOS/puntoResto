@@ -83,8 +83,8 @@ it('rejects an invalid status filter', function () {
     $this->get('/sales?status=foo')->assertSessionHasErrors('status');
 });
 
-it('redirects guests to the login page', function () {
+it('allows guests to see the sales page', function () {
     auth()->logout();
 
-    $this->get('/sales')->assertRedirect('/login');
+    $this->get('/sales')->assertOk();
 });

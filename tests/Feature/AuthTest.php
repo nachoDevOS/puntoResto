@@ -1,41 +1,21 @@
 <?php
 
-use App\Models\User;
-
-it('shows the login page to guests', function () {
+it('shows the entry page', function () {
     $this->get('/login')->assertOk();
 });
 
-it('logs in with valid credentials', function () {
-    $user = User::factory()->create(['password' => 'secret123']);
-
-    $this->post('/login', [
-        'email' => $user->email,
-        'password' => 'secret123',
-    ])->assertRedirect(route('pos.index'));
-
-    $this->assertAuthenticatedAs($user);
-});
-
-it('rejects invalid credentials', function () {
-    $user = User::factory()->create(['password' => 'secret123']);
-
-    $this->from('/login')->post('/login', [
-        'email' => $user->email,
-        'password' => 'wrong-password',
-    ])->assertSessionHasErrors('email');
+it('enters the system without credentials', function () {
+    $this->post('/login')->assertRedirect(route('pos.index'));
 
     $this->assertGuest();
 });
 
-it('redirects guests away from protected pages', function () {
-    $this->get('/pos')->assertRedirect('/login');
+it('allows guests to use protected pages freely', function () {
+    $this->get('/pos')->assertOk();
 });
 
-it('logs out the user', function () {
-    $user = User::factory()->create();
-
-    $this->actingAs($user)->post('/logout')->assertRedirect('/login');
+it('keeps logout as a harmless redirect to the entry page', function () {
+    $this->post('/logout')->assertRedirect('/login');
 
     $this->assertGuest();
 });

@@ -1,9 +1,7 @@
 <?php
 
-use App\Models\User;
-
-test('the home page redirects authenticated users to the pos', function () {
-    $this->actingAs(User::factory()->create())
-        ->get('/')
-        ->assertRedirect('/pos');
+test('the home page shows the entry page', function () {
+    $this->get('/')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->component('Auth/Login'));
 });

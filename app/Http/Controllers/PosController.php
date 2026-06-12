@@ -6,8 +6,11 @@ use App\Http\Requests\StoreSaleRequest;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Sale;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -67,9 +70,10 @@ class PosController extends Controller
 
         $sale = DB::transaction(function () use ($request, $validated, $details, $total, $cashAmount, $qrAmount): Sale {
             $ticketDate = now();
+            $userId = $request->user()?->id ?? $this->systemUserId();
 
             $sale = Sale::create([
-                'user_id' => $request->user()->id,
+                'user_id' => $userId,
                 'type' => $validated['type'],
                 'table_number' => $validated['type'] === 'mesa' ? $validated['table_number'] : null,
                 'payment_method' => $validated['payment_method'],
@@ -123,5 +127,16 @@ class PosController extends Controller
                 ->values()
                 ->all(),
         ];
+    }
+
+    private function systemUserId(): int
+    {
+        return User::firstOrCreate(
+            ['email' => 'sistema@puntoresto.local'],
+            [
+                'name' => 'Sistema Libre',
+                'password' => Hash::make(Str::random(32)),
+            ],
+        )->id;
     }
 }

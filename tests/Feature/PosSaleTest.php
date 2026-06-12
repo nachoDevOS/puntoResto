@@ -2,13 +2,7 @@
 
 use App\Models\Product;
 use App\Models\Sale;
-use App\Models\User;
 use Illuminate\Support\Carbon;
-
-beforeEach(function () {
-    $this->user = User::factory()->create();
-    $this->actingAs($this->user);
-});
 
 afterEach(function () {
     Carbon::setTestNow();
@@ -54,7 +48,7 @@ it('registers a table sale with cash payment', function () {
     expect($sale->total)->toBe('30.00')
         ->and($sale->type)->toBe('mesa')
         ->and($sale->table_number)->toBe(4)
-        ->and($sale->user_id)->toBe($this->user->id)
+        ->and($sale->user->email)->toBe('sistema@puntoresto.local')
         ->and($sale->details)->toHaveCount(1)
         ->and($sale->details->first()->subtotal)->toBe('30.00');
 });
