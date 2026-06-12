@@ -24,7 +24,7 @@ it('shows the pos screen with active products only', function () {
 it('registers a table sale with cash payment', function () {
     $product = Product::factory()->create(['price' => 15.00]);
 
-    $this->post('/pos/sales', [
+    $response = $this->post('/pos/sales', [
         'type' => 'mesa',
         'table_number' => 4,
         'payment_method' => 'efectivo',
@@ -33,7 +33,16 @@ it('registers a table sale with cash payment', function () {
         'items' => [
             ['product_id' => $product->id, 'quantity' => 2],
         ],
-    ])->assertRedirect()->assertSessionHas('success');
+    ])->assertRedirect()
+        ->assertSessionHas('success')
+        ->assertSessionHas('print_sale');
+
+    $printSale = $response->baseResponse->getSession()->get('print_sale');
+
+    expect($printSale['typeSale'])->toBe('mesa')
+        ->and($printSale['observation'])->toBe('Mesa 4')
+        ->and($printSale['sale_details'][0]['quantity'])->toBe(2)
+        ->and((float) $printSale['sale_details'][0]['amount'])->toBe(30.0);
 
     $sale = Sale::first();
 

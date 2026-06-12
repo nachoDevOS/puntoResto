@@ -43,6 +43,15 @@ class HandleInertiaRequests extends Middleware
             'flash' => [
                 'success' => $request->session()->get('success'),
                 'error' => $request->session()->get('error'),
+                'print_sale' => $request->session()->get('print_sale'),
+            ],
+            'printer' => [
+                'ticket_service_url' => config('printing.ticket_service_url'),
+                'type' => config('printing.type'),
+                'ip' => config('printing.ip'),
+                'port' => config('printing.port'),
+                'template' => config('printing.template'),
+                'title' => config('printing.title'),
             ],
         ];
     }

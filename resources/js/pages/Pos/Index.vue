@@ -2,11 +2,14 @@
 import { computed, ref, watch } from 'vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import AppLayout from '../../layouts/AppLayout.vue';
+import { useTicketPrinter } from '../../composables/useTicketPrinter';
 
 const props = defineProps({
     categories: Array,
     products: Array,
 });
+
+const { printTicket } = useTicketPrinter();
 
 const selectedCategory = ref(null);
 const search = ref('');
@@ -118,13 +121,17 @@ const submit = () => {
 
     form.post('/pos/sales', {
         preserveScroll: true,
-        onSuccess: () => {
+        onSuccess: (response) => {
             cart.value = [];
             form.reset();
 
             saleSuccess.value = { total: saleTotal, change: saleChange };
             clearTimeout(saleSuccessTimer);
             saleSuccessTimer = setTimeout(() => (saleSuccess.value = null), 3000);
+
+            const flash = response.props.flash ?? {};
+
+            printTicket(response.props.printer, flash.print_sale);
         },
     });
 };

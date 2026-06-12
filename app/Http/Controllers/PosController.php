@@ -65,7 +65,7 @@ class PosController extends Controller
             return back()->with('error', 'El monto pagado es menor al total.');
         }
 
-        DB::transaction(function () use ($request, $validated, $details, $total, $cashAmount, $qrAmount) {
+        $sale = DB::transaction(function () use ($request, $validated, $details, $total, $cashAmount, $qrAmount): Sale {
             $sale = Sale::create([
                 'user_id' => $request->user()->id,
                 'type' => $validated['type'],
@@ -77,8 +77,47 @@ class PosController extends Controller
             ]);
 
             $sale->details()->createMany($details);
+
+            return $sale->load('details');
         });
 
-        return back()->with('success', 'Venta registrada.');
+        return back()
+            ->with('success', 'Venta registrada.')
+            ->with('print_sale', $this->printSalePayload($sale));
+    }
+
+    /**
+     * @return array{
+     *     id: int,
+     *     ticket: string,
+     *     typeSale: string,
+     *     observation: string|null,
+     *     created_at: string|null,
+     *     sale_details: array<int, array{quantity: int|float, amount: float, item: array{name: string}}>
+     * }
+     */
+    private function printSalePayload(Sale $sale): array
+    {
+        return [
+            'id' => $sale->id,
+            'ticket' => str_pad((string) $sale->id, 6, '0', STR_PAD_LEFT),
+            'typeSale' => $sale->type,
+            'observation' => $sale->table_number ? 'Mesa '.$sale->table_number : null,
+            'created_at' => $sale->created_at?->toDateTimeString(),
+            'sale_details' => $sale->details
+                ->map(function ($detail): array {
+                    $quantity = (float) $detail->quantity;
+
+                    return [
+                        'quantity' => fmod($quantity, 1.0) === 0.0 ? (int) $quantity : $quantity,
+                        'amount' => (float) $detail->subtotal,
+                        'item' => [
+                            'name' => $detail->product_name,
+                        ],
+                    ];
+                })
+                ->values()
+                ->all(),
+        ];
     }
 }
